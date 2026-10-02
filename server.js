@@ -6,6 +6,32 @@ const PORT = Number(process.env.PORT || 3000);
 const PUBLIC_DIR = path.join(__dirname, "public");
 const MAX_BODY_BYTES = 24 * 1024;
 
+// Some image assets were originally committed as base64 text instead of binary.
+// Repair them inside the Railway container on every boot before static serving starts.
+function repairBase64Asset(relativePath, expectedMagic) {
+  const filePath = path.join(PUBLIC_DIR, relativePath);
+  try {
+    if (!fs.existsSync(filePath)) return;
+    const raw = fs.readFileSync(filePath);
+    if (raw.subarray(0, expectedMagic.length).equals(expectedMagic)) return;
+
+    const text = raw.toString("utf8").trim().replace(/\s+/g, "");
+    if (!/^[A-Za-z0-9+/=]+$/.test(text) || text.length < 100) return;
+
+    const decoded = Buffer.from(text, "base64");
+    if (!decoded.subarray(0, expectedMagic.length).equals(expectedMagic)) return;
+
+    fs.writeFileSync(filePath, decoded);
+    console.log(`Repaired binary asset: ${relativePath}`);
+  } catch (error) {
+    console.error(`Asset repair failed for ${relativePath}:`, error.message);
+  }
+}
+
+repairBase64Asset("assets/alex-portrait.webp", Buffer.from("RIFF"));
+repairBase64Asset("assets/logo-horizontal.webp", Buffer.from("RIFF"));
+repairBase64Asset("assets/favicon.png", Buffer.from([0x89, 0x50, 0x4e, 0x47]));
+
 const attempts = new Map();
 const WINDOW_MS = 15 * 60 * 1000;
 const MAX_ATTEMPTS = 5;
@@ -112,7 +138,6 @@ async function handleLead(req, res) {
     });
   }
 
-  // Honeypot. Real visitors never see or fill this field.
   if (clean(data.website, 200)) {
     return json(res, 200, { ok: true });
   }
@@ -185,6 +210,33 @@ async function handleLead(req, res) {
   }
 }
 
+const MOBILE_FIXES = `
+<style id="am-mobile-fixes">
+.allo-circle strong{white-space:nowrap;text-align:center;font-size:clamp(34px,4vw,62px);letter-spacing:-.055em}
+@media(max-width:700px){
+  .nav{gap:12px}.logo img{height:23px;max-width:132px}.top-cta{padding:10px 12px}
+  .hero-panel{padding:20px;min-height:330px}.panel-top{gap:10px}.panel-mark{width:46px;height:46px}
+  .project{min-height:0;padding:22px;grid-template-columns:1fr;gap:28px}
+  .project-copy{min-width:0}.project-copy h3{font-size:42px;line-height:.96}.project-copy p{max-width:none;font-size:14px}
+  .metrics{display:grid;grid-template-columns:1fr;gap:8px;margin-top:22px}
+  .metric{min-width:0;width:100%;padding:12px 14px;border-radius:15px;display:grid;grid-template-columns:110px 1fr;align-items:center;gap:12px}
+  .metric b{font-size:22px}.metric span{margin-top:0;font-size:11px;line-height:1.35}
+  .project-visual{min-height:260px;width:100%;overflow:hidden}
+  .media-stack{inset:4% 0 0}.media-card{padding:15px;border-radius:17px}.media-card.a{left:0;right:12%;height:45%}.media-card.b{left:10%;right:0;height:47%}
+  .media-card strong{font-size:38px;line-height:.92}.media-card span{font-size:10px}.media-connector{left:40%;top:44%;width:30%}
+  .allo-circle{width:min(88%,290px)}.allo-circle strong{font-size:40px;white-space:nowrap;letter-spacing:-.055em}
+  .bot-ui{inset:0;padding:14px;gap:10px}.bot-query{max-width:88%}.bot-result{padding:13px}.bot-actions{grid-template-columns:repeat(3,minmax(0,1fr))}.bot-actions span{padding:9px 4px;overflow:hidden;text-overflow:ellipsis}
+  .about-panel{padding:22px;min-height:0}.about-monogram{min-height:360px;border-radius:20px}.about-monogram img{object-position:center 35%}
+}
+</style>`;
+
+function prepareHtml(content) {
+  let html = content.toString("utf8");
+  html = html.replace('<div class="allo-circle"><strong>allo<br>walks</strong></div>', '<div class="allo-circle"><strong>AlloWalks</strong></div>');
+  html = html.replace("</head>", `${MOBILE_FIXES}</head>`);
+  return Buffer.from(html, "utf8");
+}
+
 function serveStatic(req, res) {
   let pathname;
   try {
@@ -211,7 +263,7 @@ function serveStatic(req, res) {
       filePath = path.join(PUBLIC_DIR, "index.html");
     }
 
-    fs.readFile(filePath, (readErr, content) => {
+    fs.readFile(filePath, (readErr, rawContent) => {
       if (readErr) {
         res.writeHead(500);
         return res.end("Internal Server Error");
@@ -231,11 +283,14 @@ function serveStatic(req, res) {
         ".ico": "image/x-icon"
       };
 
+      const content = ext === ".html" ? prepareHtml(rawContent) : rawContent;
       res.writeHead(200, {
         "Content-Type": types[ext] || "application/octet-stream",
         "X-Content-Type-Options": "nosniff",
-        "Referrer-Policy": "strict-origin-when-cross-origin"
+        "Referrer-Policy": "strict-origin-when-cross-origin",
+        "Cache-Control": ext === ".html" ? "no-store" : "public, max-age=300"
       });
+      if (req.method === "HEAD") return res.end();
       res.end(content);
     });
   });
