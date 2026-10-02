@@ -138,8 +138,8 @@ const MOBILE_FIXES = `
 
 function prepareHtml(content) {
   let html = content.toString("utf8");
-  const caseHead = '<link rel="stylesheet" href="/case-upgrade.css?v=4">';
-  const caseScripts = '<script src="/case-sprite-data.js?v=4"></script><script src="/case-upgrade.js?v=4"></script>';
+  const caseHead = '<link rel="stylesheet" href="/case-upgrade.css?v=8">';
+  const caseScripts = '<script src="/case-upgrade.js?v=8"></script>';
   if (!html.includes('/case-upgrade.css')) html = html.replace("</head>", `${MOBILE_FIXES}${caseHead}</head>`);
   if (!html.includes('/case-upgrade.js')) html = html.replace("</body>", `${caseScripts}</body>`);
   return Buffer.from(html, "utf8");
