@@ -1,0 +1,1 @@
+Case assets are stored as binary blobs and referenced directly by the production case layout.
