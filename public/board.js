@@ -1,4 +1,4 @@
-import { reels } from './site-data.js?v=24';
+import { reels } from './site-data.js?v=25';
 export function mountBoard(openCase) {
  const host=document.getElementById('ecosystem'), viewport=document.getElementById('boardViewport'),world=document.getElementById('boardWorld');
  const W=1740,H=1120; world.style.width=W+'px';world.style.height=H+'px';
@@ -13,7 +13,7 @@ export function mountBoard(openCase) {
  ${node('instagram',650,160,360,300,'node-platform',label('Instagram')+`<div class="platform-crop">${image('ig-identity.webp','Профиль Podslushano.nl в Instagram')}</div><div class="platform-stat"><strong>77.2K</strong><span>подписчиков</span></div>`)}
  ${node('audience',650,490,360,100,'node-mini',label('Просмотры за 30 дней')+'<strong>1.7M</strong>')}
  ${node('telegram',650,620,360,150,'node-platform',label('Telegram')+'<strong>3,898</strong><p>подписчиков канала</p>')}
- ${node('facebook',650,800,360,205,'node-platform',label('Facebook')+`<div class="platform-crop" style="height:85px">${image('facebook-identity.webp','Страница Podslushano.nl в Facebook')}</div><div class="platform-stat"><strong>27K</strong><span>подписчиков</span></div>`)}
+ ${node('facebook',650,800,360,205,'node-platform',label('Facebook')+`<div class="facebook-identity">${image('pod-brand-detail.webp','Олень — символ Podslushano.nl')}<span>Podslushano.nl<small>Медиа о Нидерландах</small></span></div><div class="platform-stat"><strong>27K</strong><span>подписчиков</span></div>`)}
  ${node('podslushano',1230,160,440,170,'node-root',label('Создал в 2024 году')+'<strong>Podslushano.nl</strong><p>Контент, реклама и сервисы<br>для аудитории медиа.</p>')}
  ${node('guide',1230,460,440,290,'node-guide',label('Сайт + Telegram-бот')+image('guide-web.webp','Каталог ContactGuide')+'<strong>ContactGuide</strong><p>Поиск специалистов и их контактов.</p>')}
  ${node('automation',1230,870,440,145,'node-process',label('Ежедневная работа')+'<strong>Процессы и автоматизация</strong><div class="mini-flow"><span>Контент</span><span>Публикация</span><span>Заявки</span></div>')}
