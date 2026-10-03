@@ -1,7 +1,7 @@
-import {renderReviews} from './reviews.js?v=25';
-import {watchIcons} from './icons.js?v=25';
-import {services,reels,testimonials} from './site-data.js?v=25';
-import {mountBoard} from './board.js?v=25';
+import {renderReviews,mountReviewForm} from './reviews.js?v=26';
+import {watchIcons} from './icons.js?v=26';
+import {services,reels,testimonials} from './site-data.js?v=26';
+import {mountBoard} from './board.js?v=26';
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const reduced=matchMedia('(prefers-reduced-motion: reduce)');
 const scrollOptions=()=>({behavior:reduced.matches?'instant':'smooth',block:'start'});
@@ -47,7 +47,7 @@ const steps=[
 ];
 function renderStep(i){const [title,text,label,doc,stamp,result]=steps[i];$$('[data-step]').forEach(b=>{const active=Number(b.dataset.step)===i;b.classList.toggle('active',active);b.setAttribute('aria-selected',active);b.tabIndex=active?0:-1});$('#processPanel').setAttribute('aria-labelledby','step'+i);$('#processPanel').innerHTML=`<div><h3>${title}</h3><p>${text}</p></div><div class="process-art" aria-hidden="true"><div class="process-document"><b>${doc}</b><div class="doc-lines"><span></span><span></span><span></span></div></div></div><div class="process-progress-line" aria-hidden="true"><span style="width:${(i+1)*25}%"></span></div>`;$('#processPanel').classList.remove('panel-enter');void $('#processPanel').offsetWidth;$('#processPanel').classList.add('panel-enter')}
 $$('[data-step]').forEach(b=>b.addEventListener('click',()=>renderStep(Number(b.dataset.step))));tabKeys($('.process-steps'),'button',b=>renderStep(Number(b.dataset.step)));renderStep(0);
-renderReviews($('#reviews'),testimonials);
+renderReviews($('#reviews'),testimonials);mountReviewForm();
 // Low-friction lead form; no real messages are sent by any page-load interaction.
 const form=$('#leadForm');let submitting=false;form.addEventListener('submit',async e=>{e.preventDefault();if(submitting||!form.reportValidity())return;const contact=$('#contactInput');if(contact.value.trim().length<3){contact.setCustomValidity('Укажите контакт для ответа.');contact.reportValidity();return}submitting=true;const button=$('#sendLead');button.disabled=true;button.textContent='Отправляю…';$('#formStatus').textContent='';try{const response=await fetch('/api/lead',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.fromEntries(new FormData(form))),signal:AbortSignal.timeout(15000)});const result=await response.json().catch(()=>({}));if(!response.ok||!result.ok)throw Error(result.error||'Не удалось отправить. Попробуйте ещё раз.');$('#success').hidden=false;$('#success').focus();form.reset();selectService(null)}catch(err){$('#formStatus').textContent=err.name==='TimeoutError'?'Ответ задерживается. Проверьте соединение и попробуйте ещё раз.':err.message||'Не удалось отправить. Попробуйте ещё раз.'}finally{submitting=false;button.disabled=false;button.innerHTML='Обсудить проект <span aria-hidden="true">↗</span>'}});$('#contactInput').addEventListener('input',e=>e.target.setCustomValidity(''));$('#newRequest').addEventListener('click',()=>{$('#success').hidden=true;$('#contactInput').focus()});
 // Motion is subtle and respects system reduced-motion preferences.
@@ -58,5 +58,5 @@ if('IntersectionObserver' in window&&!reduced.matches){document.documentElement.
 
 watchIcons(document.body);
 
-import {mountProjectTransition} from './project-transition.js?v=25';
+import {mountProjectTransition} from './project-transition.js?v=26';
 mountProjectTransition();

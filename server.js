@@ -125,6 +125,29 @@ async function handleLead(req, res) {
   }
 }
 
+async function handleReview(req, res) {
+  if (!allowedByRateLimit(req)) return json(res, 429, { ok:false, error:'Слишком много отправок. Попробуйте позже.' });
+  let data;
+  try { data = await readJsonBody(req); }
+  catch { return json(res, 400, { ok:false, error:'Не удалось прочитать отзыв.' }); }
+  if (!data || typeof data !== 'object' || Array.isArray(data)) return json(res,400,{ok:false,error:'Некорректный формат отзыва.'});
+  if (clean(data.website,200)) return json(res,200,{ok:true});
+  const validString=(v,min,max)=>typeof v==='string'&&v.trim().length>=min&&v.length<=max;
+  if (!validString(data.name,2,80)||!validString(data.text,10,2000)||!Number.isInteger(data.rating)||data.rating<1||data.rating>5||data.consent!==true)
+    return json(res,400,{ok:false,error:'Укажите имя, оценку от 1 до 5, отзыв от 10 символов и согласие на публикацию.'});
+  if ((data.contact!==undefined&&!validString(data.contact,0,200))||(data.project!==undefined&&!validString(data.project,0,120)))
+    return json(res,400,{ok:false,error:'Проверьте длину полей контакта и проекта.'});
+  const token=process.env.TELEGRAM_BOT_TOKEN,chat=process.env.TELEGRAM_CHAT_ID;
+  if(!token||!chat)return json(res,503,{ok:false,error:'Отправка временно недоступна. Попробуйте позже.'});
+  const message=['<b>Новый отзыв — AM Projects</b>','Статус: ожидает проверки. На сайте ещё не опубликован.','',`<b>Имя:</b> ${escapeHtml(data.name)}`,`<b>Оценка:</b> ${data.rating} / 5`,`<b>Проект:</b> ${escapeHtml(data.project||'Не указан')}`,`<b>Контакт (не публиковать):</b> ${escapeHtml(data.contact||'Не указан')}`,'','<b>Текст:</b>',escapeHtml(data.text),'','Автор согласился на публикацию имени, оценки и текста.'].join('\n');
+  try {
+    const response=await fetch(`https://api.telegram.org/bot${token}/sendMessage`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:chat,text:message,parse_mode:'HTML',disable_web_page_preview:true}),signal:AbortSignal.timeout(10000)});
+    const result=await response.json().catch(()=>null);
+    if(!response.ok||!result?.ok)return json(res,502,{ok:false,error:'Не удалось отправить отзыв. Попробуйте ещё раз.'});
+    return json(res,200,{ok:true});
+  }catch{return json(res,502,{ok:false,error:'Не удалось отправить отзыв. Попробуйте ещё раз.'});}
+}
+
 function serveStatic(req, res) {
   let pathname;
   try { pathname = decodeURIComponent(new URL(req.url, "http://localhost").pathname); }
@@ -164,6 +187,7 @@ function serveStatic(req, res) {
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, "http://localhost");
   if (req.method === "GET" && url.pathname === "/health") return json(res, 200, { ok: true, service: "amprojects-leads" });
+  if (req.method === "POST" && url.pathname === "/api/review") return handleReview(req, res);
   if (req.method === "POST" && url.pathname === "/api/lead") return handleLead(req, res);
   if (req.method === "GET" || req.method === "HEAD") return serveStatic(req, res);
   return json(res, 405, { ok: false, error: "Method not allowed." });
