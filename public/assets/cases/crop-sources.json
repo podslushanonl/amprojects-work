@@ -1,0 +1,155 @@
+{
+  "ig-identity.webp": {
+    "source": "photo_5332590412595667188_y.jpg",
+    "crop": [
+      0,
+      0,
+      1168,
+      880
+    ]
+  },
+  "ig-dashboard.webp": {
+    "source": "photo_5332590412595667188_y.jpg",
+    "crop": [
+      15,
+      1070,
+      1150,
+      1270
+    ]
+  },
+  "tg-identity.webp": {
+    "source": "photo_5332590412595667187_y.jpg",
+    "crop": [
+      130,
+      0,
+      880,
+      520
+    ]
+  },
+  "facebook-identity.webp": {
+    "source": "photo_5332590412595667186_y.jpg",
+    "crop": [
+      20,
+      240,
+      1150,
+      900
+    ]
+  },
+  "guide-web.webp": {
+    "source": "photo_5332590412595667191_w.jpg",
+    "crop": [
+      26,
+      410,
+      995,
+      1520
+    ]
+  },
+  "bot-identity.webp": {
+    "source": "photo_5332590412595667219_y.jpg",
+    "crop": [
+      230,
+      20,
+      750,
+      570
+    ]
+  },
+  "allo-identity.webp": {
+    "source": "photo_5332590412595667220_y.jpg",
+    "crop": [
+      0,
+      0,
+      1179,
+      710
+    ]
+  },
+  "reel-tunnel.webp": {
+    "source": "photo_5332590412595667235_w.jpg",
+    "crop": [
+      321,
+      320,
+      624,
+      856
+    ]
+  },
+  "reel-boat.webp": {
+    "source": "photo_5332590412595667230_w.jpg",
+    "crop": [
+      321,
+      310,
+      624,
+      850
+    ]
+  },
+  "reel-bicycle.webp": {
+    "source": "photo_5332590412595667233_w.jpg",
+    "crop": [
+      321,
+      315,
+      624,
+      851
+    ]
+  },
+  "reel-park.webp": {
+    "source": "photo_5332590412595667231_w.jpg",
+    "crop": [
+      321,
+      310,
+      624,
+      850
+    ]
+  },
+  "boat-engagement.webp": {
+    "source": "photo_5332590412595667230_w.jpg",
+    "crop": [
+      36,
+      888,
+      910,
+      1035
+    ]
+  },
+  "boat-results.webp": {
+    "source": "photo_5332590412595667230_w.jpg",
+    "crop": [
+      37,
+      1290,
+      912,
+      1712
+    ]
+  },
+  "boat-followers.webp": {
+    "source": "photo_5332590412595667230_w.jpg",
+    "crop": [
+      490,
+      1515,
+      912,
+      1705
+    ]
+  },
+  "boat-reach.webp": {
+    "source": "photo_5332590412595667230_w.jpg",
+    "crop": [
+      490,
+      1290,
+      912,
+      1490
+    ]
+  },
+  "content-overview.webp": {
+    "source": "photo_5332590412595667225_w.jpg",
+    "crop": [
+      35,
+      270,
+      914,
+      1780
+    ]
+  },
+  "grayscale-interactions.webp": {
+    "source": "IMG_9372.jpeg",
+    "crop": [
+      35,
+      1100,
+      635,
+      1152
+    ]
+  }
+}

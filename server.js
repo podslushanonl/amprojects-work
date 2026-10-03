@@ -83,11 +83,11 @@ async function handleLead(req, res) {
 
   if (clean(data.website, 200)) return json(res, 200, { ok: true });
 
-  const name = clean(data.name, 120);
+  const name = clean(data.name, 120) || "Не указано";
   const contact = clean(data.contact, 200);
-  const service = clean(data.service, 250);
-  const task = clean(data.task, 2500);
-  if (!name || !contact || !service || !task) return json(res, 400, { ok: false, error: "Заполните обязательные поля." });
+  const service = clean(data.service, 250) || "Обсудить проект";
+  const task = clean(data.task, 2500) || "Уточнить при первом контакте";
+  if (contact.length < 3) return json(res, 400, { ok: false, error: "Укажите Telegram, WhatsApp или email для ответа." });
 
   const business = clean(data.business, 200) || "—";
   const budget = clean(data.budget, 120) || "—";
@@ -125,23 +125,6 @@ async function handleLead(req, res) {
   }
 }
 
-const MOBILE_FIXES = `
-<style id="am-mobile-fixes">
-.allo-circle strong{white-space:nowrap;text-align:center;font-size:clamp(34px,4vw,62px);letter-spacing:-.055em}
-@media(max-width:700px){
-  .nav{gap:12px}.brand img{height:23px;max-width:132px}.nav-cta{padding:10px 12px}
-  .hero-panel{padding:16px!important;min-height:250px!important}.panel-stage{min-height:120px!important}.panel-mark{width:40px!important;height:40px!important}
-  .project{min-height:0;padding:22px;grid-template-columns:1fr;gap:28px}
-  .project-copy{min-width:0}.project-copy h3{font-size:42px;line-height:.96}.project-copy p{max-width:none;font-size:14px}
-}
-</style>`;
-
-function prepareHtml(content) {
-  let html = content.toString("utf8");
-  html = html.replace("</head>", `${MOBILE_FIXES}</head>`);
-  return Buffer.from(html, "utf8");
-}
-
 function serveStatic(req, res) {
   let pathname;
   try { pathname = decodeURIComponent(new URL(req.url, "http://localhost").pathname); }
@@ -165,7 +148,7 @@ function serveStatic(req, res) {
         ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg",
         ".jpeg": "image/jpeg", ".webp": "image/webp", ".ico": "image/x-icon"
       };
-      const content = ext === ".html" ? prepareHtml(rawContent) : rawContent;
+      const content = rawContent;
       res.writeHead(200, {
         "Content-Type": types[ext] || "application/octet-stream",
         "X-Content-Type-Options": "nosniff",
