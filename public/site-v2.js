@@ -1,6 +1,6 @@
-import {watchIcons} from './icons.js?v=23';
-import {services,reels,testimonials} from './site-data.js?v=23';
-import {mountBoard} from './board.js?v=23';
+import {watchIcons} from './icons.js?v=24';
+import {services,reels,testimonials} from './site-data.js?v=24';
+import {mountBoard} from './board.js?v=24';
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const reduced=matchMedia('(prefers-reduced-motion: reduce)');
 const scrollOptions=()=>({behavior:reduced.matches?'instant':'smooth',block:'start'});
@@ -8,10 +8,10 @@ const image=(file,alt,cls='')=>`<img class="${cls}" src="/assets/cases/${file}" 
 const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const metrics=items=>`<div class="dialog-metrics">${items.filter(x=>x[0]).map(([v,k])=>`<div><b>${v}</b><span>${k}</span></div>`).join('')}</div>`;
 // Services remain one browsable workspace; choosing one is never required to contact Alex.
-const tabs=$('#serviceTabs');let serviceKey='site';
-Object.entries(services).forEach(([key,s])=>{const b=document.createElement('button');b.type='button';b.className='service-tab';b.dataset.service=key;b.id='service-'+key;b.setAttribute('role','tab');b.setAttribute('aria-controls','servicePanel');b.innerHTML=`<span>${s.name}</span><span>${s.price}</span>`;b.addEventListener('click',()=>renderService(key));tabs.append(b)});
-function renderService(key){serviceKey=key;const s=services[key];$$('.service-tab').forEach(b=>{const active=b.dataset.service===key;b.classList.toggle('active',active);b.setAttribute('aria-selected',active);b.tabIndex=active?0:-1});$('#servicePanel').setAttribute('aria-labelledby','service-'+key);$('#serviceTitle').textContent=s.name;$('#servicePrice').textContent=s.price;$('#serviceText').textContent=s.text;$('#serviceScope').textContent=s.scope;$('#serviceIncluded').innerHTML=s.items.map(([t,p])=>`<div><b>${t}</b><p>${p}</p></div>`).join('');$('#servicePanel').classList.remove('panel-enter');void $('#servicePanel').offsetWidth;$('#servicePanel').classList.add('panel-enter')}
-renderService('site');
+const tabs=$('#serviceTabs');let serviceKey='consult';
+Object.entries(services).forEach(([key,s])=>{const b=document.createElement('button');b.type='button';b.className='service-tab';b.dataset.service=key;if(key==='partner')b.classList.add('featured-service');b.id='service-'+key;b.setAttribute('role','tab');b.setAttribute('aria-controls','servicePanel');b.innerHTML=`<span>${s.name}${key==='partner'?'<small class=service-badge>Сопровождение</small>':''}</span><span>${s.price}</span>`;b.addEventListener('click',()=>renderService(key));tabs.append(b)});
+function renderService(key){serviceKey=key;const s=services[key];$('#servicePanel').classList.toggle('featured-panel',key==='partner');$('#serviceTools').innerHTML=s.tools.map(t=>`<span>${escape(t)}</span>`).join('');$('#serviceDeliverable').textContent=s.deliverable;$$('.service-tab').forEach(b=>{const active=b.dataset.service===key;b.classList.toggle('active',active);b.setAttribute('aria-selected',active);b.tabIndex=active?0:-1});$('#servicePanel').setAttribute('aria-labelledby','service-'+key);$('#serviceTitle').textContent=s.name;$('#servicePrice').textContent=s.price;$('#serviceText').textContent=s.text;$('#serviceScope').textContent=s.scope;$('#serviceIncluded').innerHTML=s.items.map(([t,p])=>`<div><b>${t}</b><p>${p}</p></div>`).join('');$('#servicePanel').classList.remove('panel-enter');void $('#servicePanel').offsetWidth;$('#servicePanel').classList.add('panel-enter')}
+renderService('consult');
 function tabKeys(container,selector,onChange){container.addEventListener('keydown',e=>{if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End'].includes(e.key))return;const buttons=[...container.querySelectorAll(selector)],i=buttons.indexOf(document.activeElement);if(i<0)return;e.preventDefault();let j=e.key==='Home'?0:e.key==='End'?buttons.length-1:(i+(['ArrowRight','ArrowDown'].includes(e.key)?1:-1)+buttons.length)%buttons.length;buttons[j].focus({preventScroll:true});onChange(buttons[j]);if(container.scrollWidth>container.clientWidth)container.scrollLeft=buttons[j].offsetLeft-container.offsetLeft-20})}
 tabKeys(tabs,'button',b=>renderService(b.dataset.service));
 function selectService(key){const s=services[key];$('#serviceInput').value=s?s.name+' — '+s.price:'Обсудить проект';$('#selectedServiceText').textContent=s?s.name+' · '+s.price:'';$('#selectedService').hidden=!s;}
@@ -56,3 +56,6 @@ const sticker=$('#heroSticker');if(matchMedia('(pointer:fine)').matches){sticker
 if('IntersectionObserver' in window&&!reduced.matches){document.documentElement.classList.add('js-ready');const observer=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in-view');observer.unobserve(e.target)}}),{threshold:.05});$$('.reveal').forEach(el=>observer.observe(el))}
 
 watchIcons(document.body);
+
+import {mountProjectTransition} from './project-transition.js?v=24';
+mountProjectTransition();
