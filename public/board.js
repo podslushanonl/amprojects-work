@@ -1,4 +1,4 @@
-import { reels } from './site-data.js?v=22';
+import { reels } from './site-data.js?v=23';
 export function mountBoard(openCase) {
  const host=document.getElementById('ecosystem'), viewport=document.getElementById('boardViewport'),world=document.getElementById('boardWorld');
  const W=1600,H=960; world.style.width=W+'px';world.style.height=H+'px';
@@ -6,14 +6,14 @@ export function mountBoard(openCase) {
  const node=(id,x,y,w,h,cls,content)=>`<button type="button" class="board-node ${cls}" data-node="${id}" style="left:${x}px;top:${y}px;width:${w}px;min-height:${h}px">${content}</button>`;
  const label=(text)=>`<span class="node-label">${text}<i aria-hidden="true">↗</i></span>`;
  world.innerHTML=`<svg class="connections" viewBox="0 0 ${W} ${H}" aria-hidden="true"><path d="M590 365 C450 365 465 195 355 195 M590 385 C435 385 465 480 325 480 M590 410 C460 410 485 755 380 755 M755 300 L755 190 M915 345 C1020 345 975 145 1050 145 M915 375 C1010 375 1010 365 1090 365 M915 400 C980 400 975 585 1040 585 M915 420 C1010 420 990 815 1080 815"/><path class="dotted" d="M755 465 C755 525 715 525 715 550 M715 770 L715 825"/></svg>
- <span class="board-group-label" style="left:58px;top:28px">Площадки</span><span class="board-group-label" style="left:1060px;top:14px">Контент, который смотрят</span><span class="board-group-label" style="left:560px;top:508px">Больше, чем медиа</span>
+ <span class="board-group-label" style="left:58px;top:28px">Площадки</span><span class="board-group-label" style="left:1060px;top:14px">Reels и статистика</span><span class="board-group-label" style="left:560px;top:508px">Сервисы и процессы</span>
  ${node('instagram',55,65,300,260,'node-platform',label('Instagram')+`<div class="platform-crop">${image('ig-identity.webp','Фрагмент профиля Instagram Podslushano.nl')}</div><div class="platform-stat"><strong>77.2K</strong><span>подписчиков</span></div>`)}
- ${node('telegram',55,400,270,180,'node-platform',label('Telegram')+`<strong>3,898</strong><p>Читателей в отдельном канале.</p><div class="platform-crop" style="height:75px;margin-top:15px">${image('tg-identity.webp','Канал Podslushano в Telegram')}</div>`)}
+ ${node('telegram',55,400,270,180,'node-platform',label('Telegram')+`<strong>3,898</strong><p>подписчиков канала</p><div class="platform-crop" style="height:75px;margin-top:15px">${image('tg-identity.webp','Канал Podslushano в Telegram')}</div>`)}
  ${node('facebook',80,650,300,210,'node-platform',label('Facebook')+`<div class="platform-crop" style="height:100px">${image('facebook-identity.webp','Фрагмент страницы Podslushano.nl в Facebook')}</div><div class="platform-stat"><strong>27K</strong><span>подписчиков</span></div>`)}
- ${node('podslushano',590,300,325,165,'node-root',label('Собственный проект')+'<strong>Podslushano.nl</strong><p>Контент, сообщество и digital-продукты.<br>Создаю и развиваю с 2024 года.</p>')}
- ${node('audience',610,65,280,125,'node-mini',label('Регулярная аудитория')+'<strong>1.7M</strong><p>просмотров за 30 дней в статистике профиля</p>')}
+ ${node('podslushano',590,300,325,165,'node-root',label('Собственный проект')+'<strong>Podslushano.nl</strong><p>Медиа о Нидерландах.<br>Создал в 2024 году.</p>')}
+ ${node('audience',610,65,280,125,'node-mini',label('Просмотры в Instagram')+'<strong>1.7M</strong><p>просмотров за 30 дней в статистике профиля</p>')}
  ${node('guide',550,550,330,220,'node-guide',label('Каталог специалистов')+image('guide-web.webp','Фрагмент ContactGuide на сайте')+'<strong>ContactGuide</strong><p>На сайте и внутри Telegram-бота.</p>')}
- ${node('automation',550,820,350,115,'node-process',label('За кадром')+'<strong>Процессы и автоматизация</strong><div class="mini-flow"><span>Контент</span><span>Публикация</span><span>Заявки</span></div>')}
+ ${node('automation',550,820,350,115,'node-process',label('Организация работы')+'<strong>Процессы и автоматизация</strong><div class="mini-flow"><span>Контент</span><span>Публикация</span><span>Заявки</span></div>')}
  ${reels.map((r,i)=>{const positions=[[1050,50],[1090,270],[1040,490],[1080,720]];return node('reel-'+r.id,...positions[i],465,190,'node-reel',image(r.image,r.title)+`<div>${label('Instagram Reels')}<strong>${r.views}</strong><p>просмотров</p><h4>${r.title}</h4><p>${r.likes} отметок «нравится» · ${r.saves} сохранений</p></div>`)}).join('')}`;
  let scale=1,tx=0,ty=0,drag=null,lastDrag=0,pinch=null; const pointers=new Map();
  const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
