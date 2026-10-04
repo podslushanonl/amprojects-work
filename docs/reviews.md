@@ -1,9 +1,11 @@
-# Client reviews
+# Review moderation
 
-Published data is the `testimonials` array in `public/site-data.js`. Add real client feedback only after permission to publish. No examples or test entries are shipped.
+Reviews are stored in the existing bot database on the persistent Railway volume (table am_project_reviews). Public data is fetched from GET /api/reviews; only approved records and public fields are returned. No private contacts appear in that response. Static testimonials are an empty loading fallback.
 
-Each entry uses: `name` (public author name), `project` (optional service/project), `text` (approved verbatim review), `rating` (integer 1–5 supplied by that client), `published` (true after approval).
+POST /api/review validates and rate-limits submissions, signs an idempotency key, and forwards them to the bot using a dedicated AM_REVIEWS_SECRET. The worker requires the same secret and AM_REVIEWS_CHAT_ID. Never expose the secret to a browser.
 
-The page displays only valid, published entries; calculates the arithmetic mean; shows a one-decimal average, fractional SVG stars and review count. Empty data shows no score. Do not infer a rating from positive text. Unrated or pending entries are excluded from both display and aggregate.
+The Telegram notification has Publish and Delete buttons. Only configured ADMIN_IDS may act. Publication changes the public feed immediately. The website refreshes every 15 seconds while visible and on return from Telegram. Delete requires confirmation, excludes the record from the feed and removes its stored content and contact; an idempotency tombstone prevents an old request from resurrecting it.
 
-Visitors submit using the review dialog and POST /api/review. Valid submissions are delivered to the configured owner Telegram chat using TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID. Success is shown only after Telegram confirms delivery. Pending submissions are retained in Telegram, not in the ephemeral Railway filesystem. The owner checks the review and adds it to testimonials with published:true to publish. Do not copy the private contact into public data. No automatic publication or approval buttons are provided.
+Use /amreviews in the bot to retrieve the latest 20 reviews. Reply /amreview to an old notification from this bot to import it as pending and receive buttons; imported reviews are never auto-published.
+
+Deployment order: configure the dedicated shared secret and chat reference; deploy the bot PR first; verify its public endpoint; then deploy the website. No webhook/polling changes are required. No real test reviews should be published.

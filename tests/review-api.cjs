@@ -1,0 +1,13 @@
+const vm=require('node:vm'),fs=require('node:fs'),http=require('node:http'),assert=require('node:assert/strict');
+let server,sent,fail=false,calls=0;
+const source=fs.readFileSync(require('path').join(__dirname,'../server.js'),'utf8');
+vm.runInNewContext(source,{require:n=>n==='http'?{...http,createServer:fn=>(server=http.createServer(fn))}:require(n),process:{env:{PORT:'3013',AM_REVIEWS_SECRET:'test-only'}},__dirname:require('path').resolve(__dirname,'..'),Buffer,URL,AbortSignal,console:{log(){},error(){}},fetch:async(url,opts)=>{calls++;if(opts.method==='POST')sent={headers:opts.headers,body:JSON.parse(opts.body)};return{ok:!fail,json:async()=>opts.method==='POST'?{ok:!fail}:{reviews:[{id:1,name:'Test',rating:4,text:'Test review',project:'Website',contact:'private',published:true},{name:'pending',published:false}]}}}});
+(async()=>{await new Promise(r=>server.on('listening',r));
+ const post=data=>fetch('http://127.0.0.1:3013/api/review',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}),good={name:'Test',rating:4,text:'A useful review',consent:true};
+ assert.equal((await post(null)).status,400);assert.equal((await post({...good,rating:6})).status,400);assert.equal(calls,0);
+ assert.equal((await post(good)).status,200);const id=sent.body.submissionId;assert.match(id,/^[a-f0-9]{64}$/);assert.equal(sent.headers.Authorization,'Bearer test-only');
+ assert.equal((await post(good)).status,200);assert.equal(sent.body.submissionId,id);
+ let response=await fetch('http://127.0.0.1:3013/api/reviews');let data=await response.json();assert.equal(data.reviews.length,1);assert.ok(!JSON.stringify(data).includes('private'));assert.equal(response.headers.get('cache-control'),'no-store');
+ fail=true;assert.equal((await post(good)).status,502);assert.equal((await fetch('http://127.0.0.1:3013/api/reviews')).status,503);assert.equal((await post(good)).status,429);
+ console.log('PASS: validation, signed idempotent forwarding, private-field exclusion, no cache, upstream failure, rate limit. No external sends.');server.close();
+})().catch(e=>{console.error(e);server.close();process.exitCode=1});

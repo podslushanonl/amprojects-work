@@ -30,3 +30,22 @@ export function mountReviewForm(){
  finally{busy=false;submit.disabled=false;submit.textContent='Отправить отзыв';dialog.querySelector('.review-close').disabled=false;}
  });
 }
+
+// Refresh when returning from Telegram and periodically while the page is visible.
+export function liveReviews(root){
+ let busy=false;
+ const refresh=async()=>{
+  if(busy||document.hidden)return;
+  busy=true;
+  try{
+   const response=await fetch('/api/reviews',{cache:'no-store',signal:AbortSignal.timeout(10000)});
+   if(!response.ok)return;
+   const data=await response.json();
+   if(Array.isArray(data.reviews))renderReviews(root,data.reviews);
+  }catch{}finally{busy=false}
+ };
+ refresh();
+ window.addEventListener('focus',refresh);
+ document.addEventListener('visibilitychange',refresh);
+ setInterval(refresh,15000);
+}
