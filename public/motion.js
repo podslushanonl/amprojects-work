@@ -59,13 +59,23 @@ export function mountMotion(){
  headings.forEach(h=>once.observe(h));
  $$('.section-heading').forEach(s=>{if(!s.querySelector('h2'))s.classList.add('is-in')});
  const portrait=$('.about-portrait');if(portrait)once.observe(portrait);
- $$('.pod-case-summary b,.map-stat b,.allo-bottom b').forEach(b=>{b.classList.add('count-target');once.observe(b)});
+ $$('.cs-stats dd,.map-stat b,.allo-bottom>div>b').forEach(b=>{b.classList.add('count-target');once.observe(b)});
 
  // ---- Scroll-linked scenes ----
  const heroSection=$('.hero'),heroCopy=$('.hero-copy'),heroArt=$('.hero-art');
  const scenes=$$('.projects-section,.contact-section');
- const showcase=$('.website-showcase'),browser=showcase?.querySelector('.desktop-browser'),phone=showcase?.querySelector('.phone-preview');
- const portraitImg=$('.about-portrait>img'),map=$('.live-map');
+ const portraitImg=$('.about-portrait>img');
+ const stripRows=$$('.strip-row'),stripHost=$('.scene-strip');
+ const remont=$('.remont-stage'),shots=remont?[...remont.querySelectorAll('.scroll-shot')]:[];
+ const guide=$('.guide-stage'),guidePhone=guide?.querySelector('.dev-phone'),guideBot=guide?.querySelector('.guide-bot');
+ const mapsPhone=$('.maps-stage .dev-phone');
+ // AlloWalks: the route draws itself and a walker travels it as the card scrolls through.
+ const route=$('#walkRoute'),live=route?.querySelector('.route-live'),walker=route?.querySelector('.route-walker');
+ const stops=route?[...route.querySelectorAll('.route-stop')]:[],labels=route?[...route.querySelectorAll('span')]:[];
+ let len=0,stopAt=[];
+ if(live){len=live.getTotalLength();route.style.setProperty('--len',len.toFixed(1));
+  // Where along the path each stop sits (0..1), found by sampling.
+  stopAt=stops.map(c=>{const cx=+c.getAttribute('cx'),cy=+c.getAttribute('cy');let best=0,bd=1e9;for(let i=0;i<=200;i++){const pt=live.getPointAtLength(len*i/200),d=(pt.x-cx)**2+(pt.y-cy)**2;if(d<bd){bd=d;best=i/200}}return best})}
  const strip=$('.discipline-strip>div');let marquee=null,lastY=scrollY,velocity=0;
 
  const progressIn=(el,vh)=>{const r=el.getBoundingClientRect();return clamp((vh-r.top)/(vh+r.height))};
@@ -82,10 +92,15 @@ export function mountMotion(){
   // Dark and lime sections start as an inset card and open to full width as they arrive.
   scenes.forEach(s=>{const top=s.getBoundingClientRect().top;s.style.setProperty('--r',clamp((vh-top)/(vh*.75)).toFixed(3))});
 
-  // Remont: the phone moves faster than the desktop screen, giving the showcase depth.
-  if(showcase){const p=progressIn(showcase,vh)-.5;browser.style.translate=`0 ${(p*-30).toFixed(1)}px`;phone.style.translate=`0 ${(p*(mobile?-40:-110)).toFixed(1)}px`}
+  // Giant words slide sideways in opposite directions while the strip crosses the screen.
+  if(stripHost){const r=stripHost.getBoundingClientRect();if(r.bottom>0&&r.top<vh){const p=clamp((vh-r.top)/(vh+r.height));stripRows.forEach(row=>{const sp=+row.dataset.speed,span=row.scrollWidth*.4;row.style.transform=`translate3d(${(sp>0?-p*span:-(1-p)*span).toFixed(1)}px,0,0)`})}}
+
+  // Remont: the real site scrolls inside the browser and the phone while you scroll the page.
+  if(remont){const r=remont.getBoundingClientRect();if(r.bottom>0&&r.top<vh){const p=clamp((vh*.85-r.top)/(vh*.85+r.height*.4));shots.forEach(img=>{const frame=img.parentElement.clientHeight,travel=Math.max(0,img.clientHeight-frame);img.style.setProperty('--shift',`${(-p*travel).toFixed(1)}px`)})}}
+  if(guide){const p=progressIn(guide,vh)-.5;guidePhone.style.translate=`0 ${(p*(mobile?-30:-70)).toFixed(1)}px`;guideBot.style.translate=`0 ${(p*(mobile?20:50)).toFixed(1)}px`}
+  if(mapsPhone){const p=progressIn(mapsPhone,vh)-.5;mapsPhone.style.translate=`0 ${(p*(mobile?-24:-50)).toFixed(1)}px`}
+  if(live){const r=route.getBoundingClientRect();const p=clamp((vh*.9-r.top)/(vh*.5));route.style.setProperty('--p',p.toFixed(3));const pt=live.getPointAtLength(len*p);walker.setAttribute('transform',`translate(${pt.x.toFixed(1)} ${pt.y.toFixed(1)})`);stops.forEach((c,i)=>{const on=p>=stopAt[i]-.01;c.classList.toggle('on',on);labels[i]?.classList.toggle('on',on)})}
   if(portraitImg){const p=progressIn(portraitImg,vh)-.5;portraitImg.style.translate=`0 ${(p*-40).toFixed(1)}px`}
-  if(map&&!mobile){const p=progressIn(map,vh)-.5;map.style.translate=`0 ${(p*-36).toFixed(1)}px`}
 
   // Marquee speeds up with scroll velocity and eases back to its idle pace.
   velocity=velocity*.85+Math.abs(y-lastY)*.15;lastY=y;
@@ -98,5 +113,5 @@ export function mountMotion(){
 
  // If the visitor switches reduced motion on mid-visit, drop every inline motion style.
  reduced.addEventListener('change',()=>{if(!reduced.matches)return;removeEventListener('scroll',schedule);root.classList.remove('motion');
-  [heroCopy,heroArt,browser,phone,portraitImg,map].forEach(el=>el?.removeAttribute('style'));scenes.forEach(s=>s.style.removeProperty('--r'));if(marquee)marquee.playbackRate=1});
+  [heroCopy,heroArt,portraitImg,guidePhone,guideBot,mapsPhone,...stripRows].forEach(el=>el?.removeAttribute('style'));shots.forEach(i=>i.style.removeProperty('--shift'));route?.style.setProperty('--p',1);scenes.forEach(s=>s.style.removeProperty('--r'));if(marquee)marquee.playbackRate=1});
 }

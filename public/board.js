@@ -1,49 +1,83 @@
-import { reels } from './site-data.js?v=25';
-export function mountBoard(openCase) {
- const host=document.getElementById('ecosystem'), viewport=document.getElementById('boardViewport'),world=document.getElementById('boardWorld');
- const W=1740,H=1120; world.style.width=W+'px';world.style.height=H+'px';
- const image=(file,alt)=>`<img src="/assets/cases/${file}" alt="${alt}" draggable="false" loading="lazy">`;
- const node=(id,x,y,w,h,cls,content)=>`<button type="button" class="board-node ${cls}" data-node="${id}" style="left:${x}px;top:${y}px;width:${w}px;min-height:${h}px">${content}</button>`;
- const label=(text)=>`<span class="node-label">${text}<i aria-hidden="true">↗</i></span>`;
- world.innerHTML=`<div class="board-lane lane-content"></div><div class="board-lane lane-audience"></div><div class="board-lane lane-products"></div><svg class="connections" viewBox="0 0 ${W} ${H}" aria-hidden="true"><defs><marker id="flowArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M1 1 9 5 1 9" fill="none" stroke="currentColor"/></marker></defs><path class="flow-link" d="M510 220 C575 220 580 300 650 300 M510 440 C585 440 575 330 650 330 M510 660 C605 660 585 360 650 360 M510 880 C615 880 600 390 650 390 M1010 300 C1090 300 1110 245 1230 245 M1010 620 C1130 620 1090 300 1230 280 M1010 860 C1170 860 1110 320 1230 310 M1410 330 L1410 460 M1410 750 L1410 870"/></svg>
- <div class="board-chapter" style="left:40px"><span>КОНТЕНТ</span><b>Привлекаю внимание</b><p>Reels о жизни в Нидерландах</p></div>
- <div class="board-chapter" style="left:650px"><span>АУДИТОРИЯ</span><b>Развиваю сообщество</b><p>Три площадки одного медиа</p></div>
- <div class="board-chapter" style="left:1230px"><span>СЕРВИСЫ</span><b>Создаю продукты</b><p>Сайт, каталог и Telegram-бот</p></div>
- ${reels.map((r,i)=>node('reel-'+r.id,40,140+i*220,470,190,'node-reel',image(r.image,r.title)+`<div>${label('Instagram Reels')}<strong>${r.views}</strong><p>просмотров</p><h4>${r.title}</h4><p>${r.likes} отметок «нравится» · ${r.saves} сохранений</p></div>`)).join('')}
- ${node('instagram',650,160,360,300,'node-platform',label('Instagram')+`<div class="platform-crop">${image('ig-identity.webp','Профиль Podslushano.nl в Instagram')}</div><div class="platform-stat"><strong>77.2K</strong><span>подписчиков</span></div>`)}
- ${node('audience',650,490,360,100,'node-mini',label('Просмотры за 30 дней')+'<strong>1.7M</strong>')}
- ${node('telegram',650,620,360,150,'node-platform',label('Telegram')+'<strong>3,898</strong><p>подписчиков канала</p>')}
- ${node('facebook',650,800,360,205,'node-platform',label('Facebook')+`<div class="facebook-identity">${image('pod-brand-detail.webp','Олень — символ Podslushano.nl')}<span>Podslushano.nl<small>Медиа о Нидерландах</small></span></div><div class="platform-stat"><strong>27K</strong><span>подписчиков</span></div>`)}
- ${node('podslushano',1230,160,440,170,'node-root',label('Создал в 2024 году')+'<strong>Podslushano.nl</strong><p>Контент, реклама и сервисы<br>для аудитории медиа.</p>')}
- ${node('guide',1230,460,440,290,'node-guide',label('Сайт + Telegram-бот')+image('guide-web.webp','Каталог ContactGuide')+'<strong>ContactGuide</strong><p>Поиск специалистов и их контактов.</p>')}
- ${node('automation',1230,870,440,145,'node-process',label('Ежедневная работа')+'<strong>Процессы и автоматизация</strong><div class="mini-flow"><span>Контент</span><span>Публикация</span><span>Заявки</span></div>')}
- <span class="edge-caption" style="left:525px;top:490px">Просмотры<br>и подписки</span><span class="edge-caption" style="left:1055px;top:420px">Переходы<br>к сервисам</span>`;
- const overview=document.createElement('div');overview.className='board-mobile-overview';overview.innerHTML=`<div class="overview-brand">Podslushano.nl<span>Медиа и сервисы о Нидерландах</span></div><button type="button" data-overview="content"><span>Контент</span><b>3.86M</b><small>просмотров одного Reels</small><div class="overview-covers">${reels.slice(0,3).map(r=>image(r.image,r.title)).join('')}</div></button><div class="overview-connector">Просмотры и подписки</div><button type="button" data-overview="audience"><span>Аудитория</span><b>77.2K</b><small>Instagram · Facebook · Telegram</small></button><div class="overview-connector">Переходы к сервисам</div><button type="button" data-overview="products"><span>Сервисы</span><b>ContactGuide</b><small>Сайт · Telegram-бот · Автоматизация</small></button>`;viewport.append(overview);
- let scale=1,tx=0,ty=0,drag=null,lastDrag=0,pinch=null; const pointers=new Map();
+import { reels } from './site-data.js?v=29';
+// Podslushano.nl case board: real screenshots on a canvas, linked by animated flows.
+// Drag / wheel+Ctrl / pinch to explore; chapter buttons fly the camera; works the same on phone and desktop.
+export function mountBoard(openCase){
+ const host=document.getElementById('ecosystem'),viewport=document.getElementById('boardViewport'),world=document.getElementById('boardWorld');
+ const W=2260,H=1180;world.style.width=W+'px';world.style.height=H+'px';world.classList.add('bd-world');
+ const reduced=matchMedia('(prefers-reduced-motion: reduce)');
+ const img=(f,alt,cls='')=>`<img class="${cls}" src="/assets/cases/${f}" alt="${alt}" draggable="false" loading="lazy">`;
+ const node=(id,x,y,w,cls,html,label)=>`<button type="button" class="bd-node ${cls}" data-node="${id}" style="left:${x}px;top:${y}px;width:${w}px" aria-label="${label}">${html}</button>`;
+ const chrome=url=>`<span class="bd-bar"><i></i><i></i><i></i><span>${url}</span></span>`;
+ const reelCards=reels.map((r,i)=>node('reel-'+r.id,60+i*168,170,152,'bd-reel',`${img(r.image,r.title)}<span class="bd-reel-meta"><b>${(parseInt(r.views.replace(/,/g,''))/1e6).toFixed(2)}M</b><small>${r.title}</small></span>`,`Reels «${r.title}»: ${r.views} просмотров`)).join('');
+ // Links: from-node → to-node, drawn as curves between the given anchor points.
+ const links=[
+  ['content','instagram','M712 300 C760 300 770 330 820 330'],
+  ['proof','instagram','M610 640 C720 640 730 420 820 400'],
+  ['instagram','site','M1250 300 C1360 300 1380 250 1500 250'],
+  ['instagram','guide','M1250 380 C1380 380 1370 560 1500 560'],
+  ['telegram','bot','M1250 860 C1370 860 1370 930 1500 930'],
+  ['facebook','site','M1030 700 C1130 640 1300 300 1500 270'],
+  ['guide','bot','M1620 760 L1620 820'],
+  ['site','ads','M2030 250 C2120 250 2120 820 2030 860']
+ ];
+ world.innerHTML=`<svg class="bd-links" viewBox="0 0 ${W} ${H}" aria-hidden="true">${links.map(([a,b,d],i)=>`<g class="bd-link" data-from="${a}" data-to="${b}"><path d="${d}"/><circle r="4"><animateMotion dur="${2.6+i%3*.5}s" repeatCount="indefinite" path="${d}" begin="${-i*.4}s"/></circle></g>`).join('')}</svg>
+ <div class="bd-chapter" style="left:60px;top:60px"><span>01 · Контент</span><b>Привлекаю внимание</b><p>Reels о жизни в Нидерландах, которые смотрят миллионы.</p></div>
+ <div class="bd-chapter" style="left:820px;top:60px"><span>02 · Аудитория</span><b>Собираю сообщество</b><p>Три площадки одного медиа.</p></div>
+ <div class="bd-chapter" style="left:1500px;top:60px"><span>03 · Сервисы</span><b>Превращаю аудиторию в продукт</b><p>Сайт, каталог специалистов, бот и реклама.</p></div>
+ ${reelCards}
+ ${node('reel-boat',60,500,230,'bd-phone',`<span class="bd-screen">${img('ph-reel-boat.webp','Статистика Reels в Instagram: 3,561,795 просмотров')}</span>`,'Статистика ролика: 3,561,795 просмотров')}
+ ${node('reel-boat',320,560,330,'bd-note bd-proof',`<span class="bd-kicker">Статистика одного ролика</span><b>3,561,795</b><small>просмотров</small><span class="bd-row"><span><b>2.2M</b>охват</span><span><b>3,694</b>подписки</span><span><b>17.4K</b>сохранений</span></span>`,'Статистика ролика «Только в Нидерландах»')}
+ ${node('instagram',820,170,430,'bd-shot',`<span class="bd-tag">Instagram</span>${img('card-instagram.webp','Профиль Podslushano.nl в Instagram: 77.2K подписчиков')}`,'Instagram: 77.2K подписчиков')}
+ ${node('audience',820,560,430,'bd-shot bd-dash',`${img('ig-dashboard.webp','Панель Instagram: 1.7M просмотров за 30 дней')}`,'1.7M просмотров за 30 дней')}
+ ${node('facebook',820,670,205,'bd-shot',`<span class="bd-tag">Facebook</span>${img('card-facebook.webp','Страница Podslushano.nl в Facebook: 27 тысяч подписчиков')}`,'Facebook: 27 тысяч подписчиков')}
+ ${node('telegram',1045,670,205,'bd-shot',`<span class="bd-tag">Telegram</span>${img('card-telegram.webp','Telegram-канал: 3,898 подписчиков')}`,'Telegram: 3,898 подписчиков')}
+ ${node('pnlsite',1500,170,530,'bd-browser',`${chrome('podslushano.nl')}${img('guide-home.webp','Главная страница podslushano.nl')}`,'Сайт podslushano.nl')}
+ ${node('guide',1500,450,530,'bd-browser',`${chrome('podslushano.nl / ContactGuide')}${img('guide-catalog.webp','Каталог ContactGuide: провинции и специалисты')}`,'Каталог специалистов ContactGuide')}
+ ${node('bot',1500,820,240,'bd-shot bd-dark',`<span class="bd-tag">Telegram-бот</span>${img('card-bot.webp','Профиль Telegram-бота podslushano.nl')}`,'Telegram-бот Podslushano.nl')}
+ ${node('automation',1770,860,260,'bd-note',`<span class="bd-kicker">Монетизация</span><b class="bd-sm">Реклама для бизнеса</b><small>Размещения, заявки рекламодателей и выпуск материалов — на одной системе.</small>`,'Реклама и процессы')}`;
+
+ // Caption + step controls inside the viewport (same on phone and desktop).
+ const views={
+  all:{box:[30,30,W-30,H-40],text:'Вся система: контент приводит аудиторию, аудитория приходит в сервисы.'},
+  content:{box:[40,40,720,1000],text:'Reels о Нидерландах: до 3.86M просмотров у одного ролика.'},
+  audience:{box:[800,40,1270,1000],text:'Instagram, Facebook и Telegram — одно сообщество на трёх площадках.'},
+  products:{box:[1480,40,2050,1150],text:'Сайт, каталог ContactGuide и бот — сюда аудитория приходит за пользой.'}
+ };
+ const order=()=>viewport.clientWidth<700?['content','audience','products','all']:['all','content','audience','products'];
+ const cap=document.createElement('div');cap.className='bd-caption';cap.innerHTML='<p aria-live="polite"></p><button type="button" class="bd-next">Дальше <span aria-hidden="true">→</span></button>';viewport.append(cap);
+
+ let scale=1,tx=0,ty=0,drag=null,lastDrag=0,pinch=null,current='all';const pointers=new Map();
  const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
- function render(){tx=clamp(tx,80-W*scale,viewport.clientWidth-80);ty=clamp(ty,80-H*scale,viewport.clientHeight-80);world.style.transform=`translate(${tx}px,${ty}px) scale(${scale})`;document.getElementById('zoomValue').value=viewport.classList.contains('overview-mode')?'Обзор':Math.round(scale*100)+'%';}
- function center(x,y,s){scale=clamp(s,.2,1.5);tx=viewport.clientWidth/2-x*scale;ty=viewport.clientHeight/2-y*scale;render()}
- let currentView='all';
- function markView(key){currentView=key;host.querySelectorAll('[data-board-view]').forEach(b=>{const on=b.dataset.boardView===key;b.classList.toggle('active',on);b.setAttribute('aria-pressed',String(on))})}
- function all(){markView('all');viewport.classList.toggle('overview-mode',viewport.clientWidth<600);center(W/2,H/2,Math.min((viewport.clientWidth-36)/W,(viewport.clientHeight-40)/H,1))}
- function goView(key){markView(key);viewport.classList.remove('overview-mode');const mobile=viewport.clientWidth<600;const views={content:[275,mobile?390:565,Math.min((viewport.clientWidth-38)/510,.82)],audience:[830,mobile?440:580,Math.min((viewport.clientWidth-38)/395,.85)],products:[1450,mobile?475:580,Math.min((viewport.clientWidth-38)/485,.85)]};if(key==='all')all();else center(...views[key])}
- function changeZoom(factor,cx=viewport.clientWidth/2,cy=viewport.clientHeight/2){if(viewport.classList.contains('overview-mode')){goView('content');return}const next=clamp(scale*factor,.3,1.5),k=next/scale;tx=cx-(cx-tx)*k;ty=cy-(cy-ty)*k;scale=next;render()}
+ function render(){const vw=viewport.clientWidth,vh=viewport.clientHeight;tx=clamp(tx,vw*.5-W*scale,vw*.5);ty=clamp(ty,vh*.5-H*scale,vh*.5);world.style.transform=`translate3d(${tx}px,${ty}px,0) scale(${scale})`;document.getElementById('zoomValue').value=Math.round(scale*100)+'%'}
+ function fly(on){world.classList.toggle('bd-flying',on&&!reduced.matches)}
+ function fit([x1,y1,x2,y2],animate=true){const vw=viewport.clientWidth,vh=viewport.clientHeight-(vw<700?64:0);const s=clamp(Math.min((vw-32)/(x2-x1),(vh-32)/(y2-y1)),.12,1.2);if(animate)fly(true);scale=s;tx=vw/2-(x1+x2)/2*s;ty=vh/2-(y1+y2)/2*s-(vw<700?24:0);render();if(animate)setTimeout(()=>fly(false),950)}
+ function goView(key,animate=true){current=key;host.querySelectorAll('[data-board-view]').forEach(b=>{const on=b.dataset.boardView===key;b.classList.toggle('active',on);b.setAttribute('aria-pressed',String(on))});cap.querySelector('p').textContent=views[key].text;cap.querySelector('.bd-next').innerHTML=key===order().at(-1)?'Сначала <span aria-hidden="true">↺</span>':'Дальше <span aria-hidden="true">→</span>';world.dataset.focus=key;fit(views[key].box,animate)}
+ function changeZoom(f,cx=viewport.clientWidth/2,cy=viewport.clientHeight/2){const next=clamp(scale*f,.12,1.6),k=next/scale;tx=cx-(cx-tx)*k;ty=cy-(cy-ty)*k;scale=next;render()}
  host.querySelectorAll('[data-board-view]').forEach(b=>b.addEventListener('click',()=>goView(b.dataset.boardView)));
- overview.querySelectorAll('[data-overview]').forEach(b=>b.addEventListener('click',()=>goView(b.dataset.overview)));
- document.getElementById('zoomIn').addEventListener('click',()=>changeZoom(1.2));document.getElementById('zoomOut').addEventListener('click',()=>changeZoom(1/1.2));document.getElementById('zoomReset').addEventListener('click',all);
- function local(e){const r=viewport.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top}}
- viewport.addEventListener('pointerdown',e=>{if(e.button!==0||viewport.classList.contains('overview-mode'))return;const p=local(e);pointers.set(e.pointerId,p);viewport.setPointerCapture(e.pointerId);if(pointers.size===1)drag={...p,tx,ty,moved:false};if(pointers.size===2){const [a,b]=[...pointers.values()];const mid={x:(a.x+b.x)/2,y:(a.y+b.y)/2};pinch={distance:Math.hypot(a.x-b.x,a.y-b.y),scale,wx:(mid.x-tx)/scale,wy:(mid.y-ty)/scale};if(drag)drag.moved=true;}});
- viewport.addEventListener('pointermove',e=>{if(!pointers.has(e.pointerId))return;const p=local(e);pointers.set(e.pointerId,p);if(pointers.size===2&&pinch){const[a,b]=[...pointers.values()];scale=clamp(pinch.scale*Math.hypot(a.x-b.x,a.y-b.y)/Math.max(1,pinch.distance),.2,1.5);tx=(a.x+b.x)/2-pinch.wx*scale;ty=(a.y+b.y)/2-pinch.wy*scale;render();}else if(drag&&pointers.size===1){const dx=p.x-drag.x,dy=p.y-drag.y;if(Math.hypot(dx,dy)>5)drag.moved=true;if(drag.moved){tx=drag.tx+dx;ty=drag.ty+dy;render()}}});
- function end(e){if(drag?.moved||pinch)lastDrag=performance.now();pointers.delete(e.pointerId);if(viewport.hasPointerCapture(e.pointerId))viewport.releasePointerCapture(e.pointerId);pinch=null;if(pointers.size){const p=[...pointers.values()][0];drag={...p,tx,ty,moved:true}}else drag=null;}
+ cap.querySelector('.bd-next').addEventListener('click',e=>{e.stopPropagation();{const o=order();goView(o[(o.indexOf(current)+1)%o.length])}});
+ document.getElementById('zoomIn').addEventListener('click',()=>changeZoom(1.25));document.getElementById('zoomOut').addEventListener('click',()=>changeZoom(1/1.25));document.getElementById('zoomReset').addEventListener('click',()=>goView('all'));
+
+ // Hover/focus a node: light up its flows, dim the rest.
+ const lit=id=>{world.querySelectorAll('.bd-link').forEach(g=>g.classList.toggle('lit',!!id&&(g.dataset.from===id||g.dataset.to===id||(id.startsWith('reel')&&(g.dataset.from==='content'||g.dataset.from==='proof')))));world.classList.toggle('bd-hovering',!!id)};
+ world.addEventListener('pointerover',e=>{const n=e.target.closest('[data-node]');if(n&&e.pointerType==='mouse')lit(n.dataset.node)});
+ world.addEventListener('pointerout',e=>{if(!e.relatedTarget||!e.relatedTarget.closest?.('[data-node]'))lit(null)});
+
+ const local=e=>{const r=viewport.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top}};
+ viewport.addEventListener('pointerdown',e=>{if(e.button!==0||e.target.closest('.bd-caption'))return;fly(false);const p=local(e);pointers.set(e.pointerId,p);viewport.setPointerCapture(e.pointerId);if(pointers.size===1)drag={...p,tx,ty,moved:false};if(pointers.size===2){const[a,b]=[...pointers.values()],mid={x:(a.x+b.x)/2,y:(a.y+b.y)/2};pinch={d:Math.hypot(a.x-b.x,a.y-b.y),scale,wx:(mid.x-tx)/scale,wy:(mid.y-ty)/scale};if(drag)drag.moved=true}});
+ viewport.addEventListener('pointermove',e=>{if(!pointers.has(e.pointerId))return;const p=local(e);pointers.set(e.pointerId,p);if(pointers.size===2&&pinch){const[a,b]=[...pointers.values()];scale=clamp(pinch.scale*Math.hypot(a.x-b.x,a.y-b.y)/Math.max(1,pinch.d),.12,1.6);tx=(a.x+b.x)/2-pinch.wx*scale;ty=(a.y+b.y)/2-pinch.wy*scale;render()}else if(drag&&pointers.size===1){const dx=p.x-drag.x,dy=p.y-drag.y;if(Math.hypot(dx,dy)>6)drag.moved=true;if(drag.moved){tx=drag.tx+dx;ty=drag.ty+dy;render()}}});
+ function end(e){if(drag?.moved||pinch)lastDrag=performance.now();pointers.delete(e.pointerId);if(viewport.hasPointerCapture(e.pointerId))viewport.releasePointerCapture(e.pointerId);pinch=null;if(pointers.size){const p=[...pointers.values()][0];drag={...p,tx,ty,moved:true}}else drag=null}
  viewport.addEventListener('pointerup',end);viewport.addEventListener('pointercancel',end);
- // Pointer capture delivers clicks to the viewport: resolve the actual node at release.
- viewport.addEventListener('click',e=>{if(e.target.closest('[data-overview]'))return;if(performance.now()-lastDrag<200)return;const target=document.elementFromPoint(e.clientX,e.clientY)?.closest('[data-node]');if(target&&world.contains(target))openCase(target.dataset.node)});
+ // Pointer capture sends the click to the viewport: resolve the real target at release, never through the caption.
+ viewport.addEventListener('click',e=>{if(e.target.closest('.bd-caption'))return;if(performance.now()-lastDrag<220)return;const t=document.elementFromPoint(e.clientX,e.clientY);if(t?.closest('.bd-caption'))return;const n=t?.closest('[data-node]');if(n&&world.contains(n))openCase(n.dataset.node)});
  world.addEventListener('keydown',e=>{const n=e.target.closest('[data-node]');if(n&&(e.key==='Enter'||e.key===' ')){e.preventDefault();openCase(n.dataset.node)}});
- world.addEventListener('focusin',e=>{const n=e.target.closest('[data-node]');if(n){const x=parseFloat(n.style.left)+n.offsetWidth/2,y=parseFloat(n.style.top)+n.offsetHeight/2;const r=n.getBoundingClientRect(),v=viewport.getBoundingClientRect();if(r.left<v.left||r.right>v.right||r.top<v.top||r.bottom>v.bottom)center(x,y,Math.max(scale,.7))}});
- viewport.addEventListener('wheel',e=>{if(e.ctrlKey||e.metaKey){e.preventDefault();const p=local(e);changeZoom(Math.exp(-e.deltaY*.008),p.x,p.y)}else if(e.shiftKey){e.preventDefault();tx-=e.deltaY||e.deltaX;render()}},{passive:false});
- viewport.addEventListener('keydown',e=>{if(e.target!==viewport)return;const moves={ArrowLeft:[75,0],ArrowRight:[-75,0],ArrowUp:[0,75],ArrowDown:[0,-75]};if(moves[e.key]){e.preventDefault();tx+=moves[e.key][0];ty+=moves[e.key][1];render()}if(e.key==='+'||e.key==='='){e.preventDefault();changeZoom(1.2)}if(e.key==='-'){e.preventDefault();changeZoom(1/1.2)}});
- const full=document.getElementById('boardFullscreen');function expand(value){host.classList.toggle('expanded',value);full.setAttribute('aria-label',value?'Свернуть доску':'Развернуть доску');full.textContent=value?'×':'⤢';document.body.classList.toggle('locked',value||document.getElementById('caseDialog').open);goView(currentView);if(value)viewport.focus({preventScroll:true})}
- full.addEventListener('click',()=>expand(!host.classList.contains('expanded')));document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!document.getElementById('caseDialog').open&&host.classList.contains('expanded')){expand(false);full.focus({preventScroll:true})}});
- let previousWidth=viewport.clientWidth;new ResizeObserver(()=>{if(Math.abs(viewport.clientWidth-previousWidth)>30){previousWidth=viewport.clientWidth;goView(currentView)}}).observe(viewport);
- all();if(innerWidth<600)document.getElementById('boardHint').textContent='Выберите раздел, чтобы рассмотреть детали';
+ world.addEventListener('focusin',e=>{const n=e.target.closest('[data-node]');if(!n)return;const r=n.getBoundingClientRect(),v=viewport.getBoundingClientRect();if(r.left<v.left||r.right>v.right||r.top<v.top||r.bottom>v.bottom){const x=parseFloat(n.style.left)+n.offsetWidth/2,y=parseFloat(n.style.top)+n.offsetHeight/2;scale=Math.max(scale,.6);tx=v.width/2-x*scale;ty=v.height/2-y*scale;render()}});
+ viewport.addEventListener('wheel',e=>{if(e.ctrlKey||e.metaKey){e.preventDefault();fly(false);const p=local(e);changeZoom(Math.exp(-e.deltaY*.008),p.x,p.y)}else if(e.shiftKey){e.preventDefault();tx-=e.deltaY||e.deltaX;render()}},{passive:false});
+ viewport.addEventListener('keydown',e=>{if(e.target!==viewport)return;const m={ArrowLeft:[80,0],ArrowRight:[-80,0],ArrowUp:[0,80],ArrowDown:[0,-80]}[e.key];if(m){e.preventDefault();tx+=m[0];ty+=m[1];render()}if(e.key==='+'||e.key==='='){e.preventDefault();changeZoom(1.25)}if(e.key==='-'){e.preventDefault();changeZoom(1/1.25)}});
+ const full=document.getElementById('boardFullscreen');
+ function expand(v){host.classList.toggle('expanded',v);full.setAttribute('aria-label',v?'Свернуть доску':'Развернуть доску');full.innerHTML=v?'<svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>':'<svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>';document.body.classList.toggle('locked',v||document.getElementById('caseDialog').open);requestAnimationFrame(()=>goView(current,false));if(v)viewport.focus({preventScroll:true})}
+ full.addEventListener('click',()=>expand(!host.classList.contains('expanded')));
+ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!document.getElementById('caseDialog').open&&host.classList.contains('expanded')){expand(false);full.focus({preventScroll:true})}});
+ let pw=viewport.clientWidth;new ResizeObserver(()=>{if(Math.abs(viewport.clientWidth-pw)>30){pw=viewport.clientWidth;goView(current,false)}}).observe(viewport);
+ goView(viewport.clientWidth<700?'content':'all',false);
+ document.getElementById('boardHint').textContent=matchMedia('(pointer:coarse)').matches?'Двигайте доску пальцем, приближайте двумя · нажмите на карточку':'Перетаскивайте доску · Ctrl + колесо для масштаба · нажмите на карточку';
 }
