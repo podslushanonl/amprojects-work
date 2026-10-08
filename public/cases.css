@@ -148,6 +148,15 @@
 .walk-route span{transition:opacity .4s,transform .4s var(--ease);background:#fff6e8;color:#251e13}
 .motion .walk-route span:not(.on){opacity:.35;transform:translateY(6px)}
 .cs-allo .allo-bottom .cs-actions{flex-wrap:nowrap}
+.allo-photos{display:flex;align-items:flex-end;align-self:flex-start;margin:22px 0 4px 4px;padding:0;background:none;border:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.allo-photos img{display:block;height:clamp(118px,13vw,168px);width:auto;border:6px solid #fff6e8;border-radius:6px;box-shadow:0 10px 24px #6b2f0636;transition:transform .5s var(--ease),rotate .5s var(--ease)}
+.allo-photos .ap-a{rotate:-4deg}
+.allo-photos .ap-b{height:clamp(140px,15.5vw,200px);margin-left:-22px;rotate:5deg;translate:0 10px}
+.allo-photos:hover .ap-a,.allo-photos:focus-visible .ap-a{rotate:-7deg;transform:translateX(-6px)}
+.allo-photos:hover .ap-b,.allo-photos:focus-visible .ap-b{rotate:8deg;transform:translateX(6px)}
+.allo-gallery-title{margin-top:26px}
+.allo-gallery{display:grid;grid-template-columns:1.6fr 1fr;gap:12px;margin:12px 0 22px}
+.allo-gallery img{width:100%;height:100%;max-height:420px;object-fit:cover;border-radius:14px;display:block}
 .cs-maps{background:var(--paper);color:var(--ink);padding:38px;display:flex;flex-direction:column}
 .cs-maps h3{font-size:clamp(36px,4vw,62px)}
 .maps-stage{position:relative;margin:26px 0 22px;padding-right:90px}
@@ -204,6 +213,8 @@
  .guide-stage{padding:0 46px 40px 0}.guide-stage .dev-phone{width:112px;padding:5px;border-radius:24px}.guide-stage .dev-phone-screen{border-radius:20px}.guide-bot{width:96px;left:-6px;bottom:-6px}
  .cs-allo,.cs-maps{padding:26px 20px}
  .cs-allo .allo-bottom{flex-wrap:wrap}
+ .allo-gallery{grid-template-columns:1fr}
+ .allo-gallery img{max-height:none;height:auto}
  .maps-stage{padding-right:70px}.maps-stage .live-map{height:230px}.maps-stage .dev-phone{width:104px;padding:5px;border-radius:22px}.maps-stage .dev-phone-screen{border-radius:18px}
  .cs-btn{padding:13px 17px}
  .ft-top{grid-template-columns:1fr 1fr;gap:30px 20px}.ft-brand{grid-column:1/-1}

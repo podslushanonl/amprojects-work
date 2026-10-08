@@ -1,4 +1,4 @@
-import { reels } from './site-data.js?v=31';
+import { reels } from './site-data.js?v=32';
 // Podslushano.nl case board: real screenshots on a canvas, linked by animated flows.
 // Drag / wheel+Ctrl / pinch to explore; chapter buttons fly the camera; works the same on phone and desktop.
 export function mountBoard(openCase){
