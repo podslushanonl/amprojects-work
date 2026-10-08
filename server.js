@@ -3,6 +3,9 @@ const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 const REVIEWS_URL = "https://worker-production-ad76.up.railway.app/api/am-reviews";
+// Visitors on the old Railway address or the bare domain are sent to the main address.
+const CANONICAL_ORIGIN = "https://www.iamalexmair.com";
+const REDIRECT_HOSTS = new Set(["amprojects-web-production.up.railway.app", "iamalexmair.com"]);
 
 const PORT = Number(process.env.PORT || 3000);
 const PUBLIC_DIR = path.join(__dirname, "public");
@@ -200,6 +203,11 @@ function serveStatic(req, res) {
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, "http://localhost");
   if (req.method === "GET" && url.pathname === "/health") return json(res, 200, { ok: true, service: "amprojects-leads" });
+  const host = String(req.headers.host || "").toLowerCase().replace(/:\d+$/, "");
+  if ((req.method === "GET" || req.method === "HEAD") && REDIRECT_HOSTS.has(host)) {
+    res.writeHead(301, { Location: CANONICAL_ORIGIN + req.url, "Cache-Control": "no-cache" });
+    return res.end();
+  }
   if (req.method === "GET" && url.pathname === "/api/reviews") return listReviews(req,res);
   if (req.method === "POST" && url.pathname === "/api/review") return handleReview(req, res);
   if (req.method === "POST" && url.pathname === "/api/lead") return handleLead(req, res);
