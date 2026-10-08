@@ -1,4 +1,4 @@
-/* AM Projects v30 — hero scene, tapes, process flow, cursor, review wizard. */
+/* AM Projects v31 — hero scene, tapes, process flow, cursor, review wizard. */
 
 /* ---------- Hero scene (sizes in container units: scales from phone to desktop) ---------- */
 .hero-art.hs{position:relative;container-type:inline-size;width:100%;max-width:600px;aspect-ratio:1/.96;padding:0;margin-inline:auto;isolation:isolate;--mx:0;--my:0}
@@ -158,14 +158,23 @@
 .rw-back{background:none;font-weight:800;font-size:13px;padding:10px 0}
 .rw-back[hidden]{visibility:hidden;display:block}
 
-@media(max-width:1000px){.flow{grid-template-columns:1fr 1fr}.flow-line{display:none}}
+@media(max-width:1000px){
+ .flow{grid-template-columns:1fr 1fr}.flow-line{display:none}
+ /* Narrow screens: the same tilt barely separates the tapes, so the lime one hid behind the dark one. Steeper angles keep the crossing visible. */
+ .tapes{height:150px}
+ .tape-a{transform:translateY(-50%) rotate(-4.5deg)}
+ .tape-b{transform:translateY(-50%) rotate(4deg)}
+}
 @media(max-width:600px){
  .hero-art.hs{max-width:none}
  .flow{grid-template-columns:1fr;gap:14px;padding-left:28px}
  .flow:before{content:'';position:absolute;left:8px;top:10px;bottom:10px;width:2px;background:#d6d3c8}
  .flow:after{content:'';position:absolute;left:8px;top:10px;width:2px;height:calc((100% - 20px) * var(--fp));background:var(--ink)}
  .flow-art{height:130px}
- .tape{font-size:16px}
+ .tapes{height:132px;margin-top:-28px}
+ .tape{font-size:15px;padding-block:10px}
+ .tape-a{transform:translateY(-50%) rotate(-7deg)}
+ .tape-b{transform:translateY(-50%) rotate(6.5deg)}
  .rw-stars button{width:50px;height:50px}
 }
 @media (prefers-reduced-motion:reduce){
