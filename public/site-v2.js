@@ -1,9 +1,9 @@
-import {renderReviews,mountReviewForm,liveReviews} from './reviews.js?v=30';
-import {watchIcons} from './icons.js?v=30';
-import {services,reels,testimonials,contacts} from './site-data.js?v=30';
-import {mountBoard} from './board.js?v=30';
-import {mountMotion} from './motion.js?v=30';
-import {mountHeroScene} from './hero-scene.js?v=30';
+import {renderReviews,mountReviewForm,liveReviews} from './reviews.js?v=31';
+import {watchIcons} from './icons.js?v=31';
+import {services,reels,testimonials,contacts} from './site-data.js?v=31';
+import {mountBoard} from './board.js?v=31';
+import {mountMotion} from './motion.js?v=31';
+import {mountHeroScene} from './hero-scene.js?v=31';
 mountMotion();mountHeroScene();
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const reduced=matchMedia('(prefers-reduced-motion: reduce)');
@@ -54,5 +54,5 @@ if('IntersectionObserver' in window&&!reduced.matches){document.documentElement.
 const fc=$('#footerContacts');(contacts||[]).forEach(c=>{const a=document.createElement('a');a.href=c.href;a.textContent=c.label;if(/^https?:/.test(c.href)){a.target='_blank';a.rel='noopener'}fc.append(a)});
 watchIcons(document.body);
 
-import {mountProjectTransition} from './project-transition.js?v=30';
+import {mountProjectTransition} from './project-transition.js?v=31';
 mountProjectTransition();
