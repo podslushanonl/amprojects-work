@@ -1,9 +1,10 @@
-import {renderReviews,mountReviewForm,liveReviews} from './reviews.js?v=29';
-import {watchIcons} from './icons.js?v=29';
-import {services,reels,testimonials,contacts} from './site-data.js?v=29';
-import {mountBoard} from './board.js?v=29';
-import {mountMotion} from './motion.js?v=29';
-mountMotion();
+import {renderReviews,mountReviewForm,liveReviews} from './reviews.js?v=30';
+import {watchIcons} from './icons.js?v=30';
+import {services,reels,testimonials,contacts} from './site-data.js?v=30';
+import {mountBoard} from './board.js?v=30';
+import {mountMotion} from './motion.js?v=30';
+import {mountHeroScene} from './hero-scene.js?v=30';
+mountMotion();mountHeroScene();
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const reduced=matchMedia('(prefers-reduced-motion: reduce)');
 const scrollOptions=()=>({behavior:reduced.matches?'instant':'smooth',block:'start'});
@@ -41,26 +42,17 @@ function openCase(id){
 }
 $('#dialogClose').addEventListener('click',()=>dialog.close());dialog.addEventListener('click',e=>{if(e.target===dialog){const r=dialog.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)dialog.close()}});dialog.addEventListener('close',()=>{document.body.classList.toggle('locked',$('#ecosystem').classList.contains('expanded'));lastFocus?.focus({preventScroll:true})});$$('[data-case-open]').forEach(b=>b.addEventListener('click',()=>openCase(b.dataset.caseOpen)));mountBoard(openCase);
 
-// Process: show the actual deliverable of each stage instead of a decorative timeline.
-const steps=[
- ['Обсуждаем вашу задачу.','Вы рассказываете о проекте и о том, что хотите изменить. Я уточняю детали, смотрю имеющиеся материалы и предлагаю подходящий вариант работы.','Ваш проект','Задачи проекта','Понятная задача','Результат: понимаем, что делаем и зачем.'],
- ['Согласуем объём, цену и сроки.','До старта определяем, что входит в работу, какие материалы понадобятся от вас и когда будет готов результат.','План работы','Объём · стоимость · сроки','Согласовано','Результат: понятные договорённости до начала работы.'],
- ['Показываю промежуточные версии.','Вы сможете посмотреть дизайн, тексты или настройки до запуска. Обсудим замечания и внесём правки в пределах согласованного объёма.','Рабочая версия','Версия на согласование','В работе','Результат: решение, которое можно посмотреть и попробовать.'],
- ['Проверяем и запускаем.','Проверю страницы на телефоне и компьютере, формы и ссылки. После запуска передам доступы и покажу, как обновлять сайт или пользоваться системой.','Готово к работе','Проверка перед запуском','Запущено ↗','Результат: рабочий проект. Дальше — развитие при необходимости.']
-];
-function renderStep(i){const [title,text,label,doc,stamp,result]=steps[i];$$('[data-step]').forEach(b=>{const active=Number(b.dataset.step)===i;b.classList.toggle('active',active);b.setAttribute('aria-selected',active);b.tabIndex=active?0:-1});$('#processPanel').setAttribute('aria-labelledby','step'+i);$('#processPanel').innerHTML=`<div><h3>${title}</h3><p>${text}</p></div><div class="process-art" aria-hidden="true"><div class="process-document"><b>${doc}</b><div class="doc-lines"><span></span><span></span><span></span></div></div></div><div class="process-progress-line" aria-hidden="true"><span style="width:${(i+1)*25}%"></span></div>`;$('#processPanel').classList.remove('panel-enter');void $('#processPanel').offsetWidth;$('#processPanel').classList.add('panel-enter')}
-$$('[data-step]').forEach(b=>b.addEventListener('click',()=>renderStep(Number(b.dataset.step))));tabKeys($('.process-steps'),'button',b=>renderStep(Number(b.dataset.step)));renderStep(0);
+
 renderReviews($('#reviews'),testimonials);mountReviewForm();liveReviews($('#reviews'));
 // Low-friction lead form; no real messages are sent by any page-load interaction.
 const form=$('#leadForm');let submitting=false;form.addEventListener('submit',async e=>{e.preventDefault();if(submitting||!form.reportValidity())return;const contact=$('#contactInput');if(contact.value.trim().length<3){contact.setCustomValidity('Укажите контакт для ответа.');contact.reportValidity();return}submitting=true;const button=$('#sendLead');button.disabled=true;button.textContent='Отправляю…';$('#formStatus').textContent='';try{const response=await fetch('/api/lead',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.fromEntries(new FormData(form))),signal:AbortSignal.timeout(15000)});const result=await response.json().catch(()=>({}));if(!response.ok||!result.ok)throw Error(result.error||'Не удалось отправить. Попробуйте ещё раз.');$('#success').hidden=false;$('#success').focus();form.reset();selectService(null)}catch(err){$('#formStatus').textContent=err.name==='TimeoutError'?'Ответ задерживается. Проверьте соединение и попробуйте ещё раз.':err.message||'Не удалось отправить. Попробуйте ещё раз.'}finally{submitting=false;button.disabled=false;button.innerHTML='Обсудить проект <span aria-hidden="true">↗</span>'}});$('#contactInput').addEventListener('input',e=>e.target.setCustomValidity(''));$('#newRequest').addEventListener('click',()=>{$('#success').hidden=true;$('#contactInput').focus()});
 // Motion is subtle and respects system reduced-motion preferences.
 const back=$('#backToTop');let ticking=false;function onScroll(){$('#header').classList.toggle('scrolled',scrollY>15);back.hidden=scrollY<600;ticking=false}onScroll();addEventListener('scroll',()=>{if(!ticking){requestAnimationFrame(onScroll);ticking=true}},{passive:true});back.addEventListener('click',()=>{window.scrollTo({top:0,behavior:reduced.matches?'instant':'smooth'});$('.brand').focus({preventScroll:true})});
-const words=$$('.sticker-words>span');words.forEach(w=>{w.setAttribute('aria-hidden','true');w.innerHTML=[...w.textContent].map((c,i)=>`<i style="--i:${i}">${c}</i>`).join('')});let word=0;setInterval(()=>{if(document.hidden)return;const prev=words[word];word=(word+1)%words.length;const next=words[word];prev.classList.remove('active');prev.classList.add('leaving');next.classList.remove('leaving');next.classList.add('active');setTimeout(()=>prev.classList.remove('leaving'),900)},2600);
-const sticker=$('#heroSticker');if(matchMedia('(pointer:fine)').matches){sticker.addEventListener('pointermove',e=>{if(reduced.matches)return;const r=sticker.getBoundingClientRect();sticker.style.transform=`rotate(-3deg) perspective(900px) rotateX(${-(e.clientY-r.top-r.height/2)/35}deg) rotateY(${(e.clientX-r.left-r.width/2)/35}deg)`});sticker.addEventListener('pointerleave',()=>sticker.style.transform='')}
+
 if('IntersectionObserver' in window&&!reduced.matches){document.documentElement.classList.add('js-ready');const observer=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in-view');observer.unobserve(e.target)}}),{threshold:.05});$$('.reveal').forEach(el=>observer.observe(el))}
 
 const fc=$('#footerContacts');(contacts||[]).forEach(c=>{const a=document.createElement('a');a.href=c.href;a.textContent=c.label;if(/^https?:/.test(c.href)){a.target='_blank';a.rel='noopener'}fc.append(a)});
 watchIcons(document.body);
 
-import {mountProjectTransition} from './project-transition.js?v=29';
+import {mountProjectTransition} from './project-transition.js?v=30';
 mountProjectTransition();

@@ -65,7 +65,6 @@ export function mountMotion(){
  const heroSection=$('.hero'),heroCopy=$('.hero-copy'),heroArt=$('.hero-art');
  const scenes=$$('.projects-section,.contact-section');
  const portraitImg=$('.about-portrait>img');
- const stripRows=$$('.strip-row'),stripHost=$('.scene-strip');
  const remont=$('.remont-stage'),shots=remont?[...remont.querySelectorAll('.scroll-shot')]:[];
  const guide=$('.guide-stage'),guidePhone=guide?.querySelector('.dev-phone'),guideBot=guide?.querySelector('.guide-bot');
  const mapsPhone=$('.maps-stage .dev-phone');
@@ -76,7 +75,7 @@ export function mountMotion(){
  if(live){len=live.getTotalLength();route.style.setProperty('--len',len.toFixed(1));
   // Where along the path each stop sits (0..1), found by sampling.
   stopAt=stops.map(c=>{const cx=+c.getAttribute('cx'),cy=+c.getAttribute('cy');let best=0,bd=1e9;for(let i=0;i<=200;i++){const pt=live.getPointAtLength(len*i/200),d=(pt.x-cx)**2+(pt.y-cy)**2;if(d<bd){bd=d;best=i/200}}return best})}
- const strip=$('.discipline-strip>div');let marquee=null,lastY=scrollY,velocity=0;
+ const tracks=$$('.tape-track');let marquees=null,lastY=scrollY,velocity=0;
 
  const progressIn=(el,vh)=>{const r=el.getBoundingClientRect();return clamp((vh-r.top)/(vh+r.height))};
  let queued=false;
@@ -92,8 +91,6 @@ export function mountMotion(){
   // Dark and lime sections start as an inset card and open to full width as they arrive.
   scenes.forEach(s=>{const top=s.getBoundingClientRect().top;s.style.setProperty('--r',clamp((vh-top)/(vh*.75)).toFixed(3))});
 
-  // Giant words slide sideways in opposite directions while the strip crosses the screen.
-  if(stripHost){const r=stripHost.getBoundingClientRect();if(r.bottom>0&&r.top<vh){const p=clamp((vh-r.top)/(vh+r.height));stripRows.forEach(row=>{const sp=+row.dataset.speed,span=row.scrollWidth*.4;row.style.transform=`translate3d(${(sp>0?-p*span:-(1-p)*span).toFixed(1)}px,0,0)`})}}
 
   // Remont: the real site scrolls inside the browser and the phone while you scroll the page.
   if(remont){const r=remont.getBoundingClientRect();if(r.bottom>0&&r.top<vh){const p=clamp((vh*.85-r.top)/(vh*.85+r.height*.4));shots.forEach(img=>{const frame=img.parentElement.clientHeight,travel=Math.max(0,img.clientHeight-frame);img.style.setProperty('--shift',`${(-p*travel).toFixed(1)}px`)})}}
@@ -104,8 +101,8 @@ export function mountMotion(){
 
   // Marquee speeds up with scroll velocity and eases back to its idle pace.
   velocity=velocity*.85+Math.abs(y-lastY)*.15;lastY=y;
-  if(!marquee&&strip)marquee=strip.getAnimations?.()[0]||null;
-  if(marquee)marquee.playbackRate=1+Math.min(velocity*.35,7);
+  if(!marquees)marquees=tracks.map(t=>t.getAnimations?.()[0]).filter(Boolean);
+  marquees.forEach(a=>a.playbackRate=1+Math.min(velocity*.25,5));
   if(velocity>.3)schedule();
  }
  function schedule(){if(!queued){queued=true;requestAnimationFrame(frame)}}
@@ -113,5 +110,5 @@ export function mountMotion(){
 
  // If the visitor switches reduced motion on mid-visit, drop every inline motion style.
  reduced.addEventListener('change',()=>{if(!reduced.matches)return;removeEventListener('scroll',schedule);root.classList.remove('motion');
-  [heroCopy,heroArt,portraitImg,guidePhone,guideBot,mapsPhone,...stripRows].forEach(el=>el?.removeAttribute('style'));shots.forEach(i=>i.style.removeProperty('--shift'));route?.style.setProperty('--p',1);scenes.forEach(s=>s.style.removeProperty('--r'));if(marquee)marquee.playbackRate=1});
+  [heroCopy,heroArt,portraitImg,guidePhone,guideBot,mapsPhone].forEach(el=>el?.removeAttribute('style'));shots.forEach(i=>i.style.removeProperty('--shift'));route?.style.setProperty('--p',1);scenes.forEach(s=>s.style.removeProperty('--r'));marquees?.forEach(a=>a.playbackRate=1)});
 }
