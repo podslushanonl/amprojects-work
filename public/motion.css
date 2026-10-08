@@ -1,0 +1,74 @@
+/* AM Projects — cinematic motion layer.
+   Everything here is opt-in through html.motion, which is set only when the visitor
+   has not asked for reduced motion. Without JS or with reduced motion the page is static. */
+
+:root{--m-ease:cubic-bezier(.16,1,.3,1);--m-ease-in-out:cubic-bezier(.65,0,.35,1)}
+
+/* ---------- Scroll progress ---------- */
+.scroll-progress{position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--lime);transform-origin:0 50%;transform:scaleX(var(--progress,0));pointer-events:none}
+
+/* ---------- Header entrance ---------- */
+.motion header{transition:background .3s,border-color .3s,transform 1s var(--m-ease) .1s}
+.motion:not(.motion-ready) header{transform:translateY(-100%)}
+
+/* ---------- Word mask reveal (headings) ---------- */
+.mw{display:inline-block;overflow:clip;overflow-clip-margin:0;vertical-align:top;padding:0 .06em .14em;margin:0 -.06em -.14em}
+.mw-i{display:inline-block;will-change:transform}
+.motion .split .mw-i{transform:translate3d(0,108%,0) rotate(4deg);transform-origin:0 100%;transition:transform 1.1s var(--m-ease);transition-delay:calc(var(--i,0) * 70ms + var(--base-delay,0ms))}
+.motion .split.is-in .mw-i{transform:none}
+
+/* Lime marker draws after its words land */
+.motion .split .text-accent{background-repeat:no-repeat;background-size:0% 100%;transition:background-size 1s var(--m-ease-in-out);transition-delay:calc(var(--accent-delay,600ms) + var(--base-delay,0ms))}
+.motion .split.is-in .text-accent{background-size:100% 100%}
+
+/* ---------- Hero choreography ---------- */
+.motion:not(.motion-ready) .hero h1{opacity:0}
+.motion .hero-lead,.motion .hero-actions{transition:opacity 1s var(--m-ease),transform 1.1s var(--m-ease)}
+.motion .hero-lead{transition-delay:.55s}
+.motion .hero-actions{transition-delay:.7s}
+.motion:not(.motion-ready) .hero-lead,.motion:not(.motion-ready) .hero-actions{opacity:0;transform:translateY(28px)}
+
+.motion .hero-sticker{transition:transform .6s var(--ease),translate 1.5s var(--m-ease) .3s,scale 1.5s var(--m-ease) .3s,opacity .9s ease .3s,rotate 1.5s var(--m-ease) .3s}
+.motion:not(.motion-ready) .hero-sticker{opacity:0;translate:0 90px;scale:.82;rotate:10deg}
+
+.motion .orbit{transition:opacity 1.4s ease .5s,scale 1.8s var(--m-ease) .5s}
+.motion:not(.motion-ready) .orbit{opacity:0;scale:.6}
+
+.motion .floating-label{transition:opacity .6s ease,scale .9s cubic-bezier(.34,1.56,.64,1)}
+.motion .label-one{transition-delay:1.05s}
+.motion .label-two{transition-delay:1.2s}
+.motion:not(.motion-ready) .floating-label{opacity:0;scale:.5}
+
+.motion .discipline-strip{transition:opacity 1s ease 1s}
+.motion:not(.motion-ready) .discipline-strip{opacity:0}
+
+/* Hero recedes while the next section scrolls over it (values set by motion.js) */
+.motion .hero-copy,.motion .hero-art{will-change:translate,opacity}
+
+/* ---------- Scene changes: dark projects and lime contact open up from a card ---------- */
+.motion .projects-section,.motion .contact-section{--r:1;--m-inset:clamp(12px,3.2vw,48px);clip-path:inset(0 calc((1 - var(--r)) * var(--m-inset)) round calc((1 - var(--r)) * 44px))}
+/* The board's fullscreen mode is position:fixed inside the section — never clip it */
+.motion .projects-section:has(.ecosystem.expanded){clip-path:none}
+
+/* Section intro text slides up with a short delay after the title */
+.motion .section-heading>p,.motion .case-system-intro{transition:opacity 1s var(--m-ease) .35s,transform 1.1s var(--m-ease) .35s}
+.motion .section-heading:not(.is-in)>p{opacity:0;transform:translateY(22px)}
+
+/* ---------- Case visuals ---------- */
+.motion .website-showcase .desktop-browser,.motion .website-showcase .phone-preview,.motion .about-portrait>img,.motion .live-map{will-change:translate}
+.motion .about-portrait{transition:clip-path 1.4s var(--m-ease)}
+.motion .about-portrait:not(.is-in){clip-path:inset(18% 0 0 0 round 20px)}
+.motion .about-portrait>img{transition:scale 1.8s var(--m-ease)}
+.motion .about-portrait:not(.is-in)>img{scale:1.18}
+
+/* Projects cards: a softer, longer rise than the default reveal */
+.motion .projects-section .reveal{transition:opacity 1s var(--m-ease),transform 1.3s var(--m-ease)}
+.motion .projects-section .reveal:not(.in-view){transform:translateY(70px) scale(.97)}
+
+/* Counters keep their width while counting */
+.count-up{font-variant-numeric:tabular-nums}
+
+@media (prefers-reduced-motion:reduce){
+ .scroll-progress{display:none}
+ .motion .projects-section,.motion .contact-section{clip-path:none}
+}

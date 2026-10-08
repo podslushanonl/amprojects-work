@@ -1,7 +1,9 @@
-import {renderReviews,mountReviewForm,liveReviews} from './reviews.js?v=27';
-import {watchIcons} from './icons.js?v=27';
-import {services,reels,testimonials} from './site-data.js?v=27';
-import {mountBoard} from './board.js?v=27';
+import {renderReviews,mountReviewForm,liveReviews} from './reviews.js?v=28';
+import {watchIcons} from './icons.js?v=28';
+import {services,reels,testimonials} from './site-data.js?v=28';
+import {mountBoard} from './board.js?v=28';
+import {mountMotion} from './motion.js?v=28';
+mountMotion();
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const reduced=matchMedia('(prefers-reduced-motion: reduce)');
 const scrollOptions=()=>({behavior:reduced.matches?'instant':'smooth',block:'start'});
@@ -58,5 +60,5 @@ if('IntersectionObserver' in window&&!reduced.matches){document.documentElement.
 
 watchIcons(document.body);
 
-import {mountProjectTransition} from './project-transition.js?v=27';
+import {mountProjectTransition} from './project-transition.js?v=28';
 mountProjectTransition();
